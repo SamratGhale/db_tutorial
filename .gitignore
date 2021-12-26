@@ -1,2 +1,4 @@
 .*.swp
 /visualStudio/.vs
+out/
+.vs/
