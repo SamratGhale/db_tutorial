@@ -1,4 +1,5 @@
 .*.swp
 /visualStudio/.vs
 out/
-.vs/
+/.vs
+*~
