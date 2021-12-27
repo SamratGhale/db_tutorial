@@ -4,15 +4,15 @@
 #include "stdlib.h"
 #include "stdint.h"
 
-#define COLUMN_USERNAME_SIZE 32
-#define COLUMN_EMAIL_SIZE    32
+#define COLUMN_USERNAME_SIZE 32 
+#define COLUMN_EMAIL_SIZE    255
 
 #define size_of_attribute(Struct, Attribute)sizeof(((Struct*)0)->Attribute)
 
 typedef struct {
 	uint32_t id;
-	char username[COLUMN_USERNAME_SIZE];
-	char email[COLUMN_EMAIL_SIZE];
+	char username[COLUMN_USERNAME_SIZE + 1];
+	char email[COLUMN_EMAIL_SIZE + 1];
 }Row;
 
 const uint32_t ID_SIZE         = size_of_attribute(Row, id);
@@ -149,6 +149,8 @@ typedef enum{
 
 typedef enum{
     PREPARE_SUCCESS,
+    PREPARE_NEGATIVE_ID,
+    PREPARE_STRING_TOO_LONG,
     PREPARE_UNRECOGNIZED_STATEMENT,
 	PREPARE_SYNTAX_ERROR
 }PrepareResult;
@@ -179,6 +181,7 @@ ExecuteResult execute_select(Statement*statenemtn, Table *table);
 /* 
  * our sql compiler, now only supprts two words 
  */
+PrepareResult prepare_insert(InputBuffer * input_buffer, Statement* statement);
 PrepareResult prepare_statement(InputBuffer *input_buffer, Statement* statement);
 
 /*
@@ -206,3 +209,4 @@ void deserialize_row(void* source, Row* destination);
  */
 
 void print_row(Row* row);
+
