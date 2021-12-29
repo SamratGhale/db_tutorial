@@ -62,7 +62,7 @@ int main(int argc, char * argv[]){
                break;
         }
     }
-    free(table);
+    free_table(table);
     return 0;
 }
 
@@ -200,9 +200,16 @@ void * get_page(Pager * pager, uint32_t page_num){
         }
 
         if(page_num <= num_pages){
-
+            lseek(pager->file_descriptor, page_num * PAGE_SIZE, SEEK_SET);
+            ssize_t bytes_read = read(pager->file_descriptor, page, PAGE_SIZE);
+            if(byte_read == -1){
+                printf("Error reading file\n", errno);
+                exit(EXIT_FAILURE);
+            }
         }
+        pager->pages[page_num] = page;
     }
+    return pager->pages[print_num];
 }
 
 ExecuteResult execute_insert(Statement* statement, Table* table){
@@ -238,6 +245,8 @@ Pager * pager_open(const char * filename){
         printf("Unable to open file\n");
         return (EXIT_FAILURE);
     }
+
+    //To find the file length SEEK_END puts the cursor to the end
     off_t file_length = lseek(fd, 0, SEEK_END);
 
     Pager * pager          = malloc(sizeof(Pager));
@@ -253,11 +262,15 @@ Pager * pager_open(const char * filename){
 
 Table* db_open(const char * filename){
     Pager * pager = pager_open(filename);
+
+    uint32_t num_rows = pager->file_length / ROW_SIZE;
+
     Table* table   = malloc(sizeof(Table));
-    table->num_rows= 0;
-    for(uint32_t i = 0; i < TABLE_MAX_PAGES; i++){
-        table->pages[i] = NULL;
-    }
+
+    table->pager = pager;
+    
+    table->num_rows = num_rows;
+
     return table;
 }
 
@@ -272,3 +285,31 @@ void free_table(Table *table){
 void print_row(Row* row){
     printf("(%d, %s, %s)\n", row->id, row->username, row->email);
 }
+
+/*When the user exits
+* Flushes the page to disk
+* Closes the database file
+* frees the memory for the pager and table data structure
+*/
+
+void db_close(Table * table){
+    Pager * pager = table->pager;    
+
+    uint32_t num_full_pages = table->num_rows / ROWS_PER_PAGE;
+
+    for(uint32_t i = 0; i < num_full_pages; i++){
+        if(pager->pages[i] == NULL){
+            continue;
+        }
+        pager_flush(pager, i, PAGE_SIZE);
+        free(pager->pages[i]);
+        pager->pages[i] = NULL;
+    }
+}
+
+
+
+
+
+
+
