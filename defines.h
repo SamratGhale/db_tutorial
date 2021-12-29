@@ -31,9 +31,24 @@ const uint32_t ROWS_PER_PAGE   = PAGE_SIZE / ROW_SIZE;
 const uint32_t TABLE_MAX_ROWS  = TABLE_MAX_PAGES * ROWS_PER_PAGE;
 
 
+/*
+ * The pager accesses the page cache and the file
+ * The table makes request for pages thru pager;
+ *
+ */
+
+typedef struct{
+    int file_descriptor;
+    uint32_t file_length;
+    void* pages[TABLE_MAX_PAGES];
+}Pager;
+
+//Open the file and put the file descriptor in the file_descriptior and file_length, and initilize the page to null, create the file if it dosen't exist;
+Pager * pager_open(const char * filename);
+
 typedef struct{
     uint32_t num_rows;
-    void* pages[TABLE_MAX_PAGES];
+    Pager * pager;
 }Table;
 typedef enum{ EXECUTE_SUCCESS, EXECUTE_TABLE_FULL} ExecuteResult;
 
@@ -41,8 +56,14 @@ typedef enum{ EXECUTE_SUCCESS, EXECUTE_TABLE_FULL} ExecuteResult;
 void* row_slot(Table* table, uint32_t row_num);
 
 
-//Constructor
-Table* new_table();
+/*
+ * opens the database file
+ * initilize the pager data structure
+ * initilize the table data structure
+ * - equvalent of opening a database connection
+ */
+
+Table* db_open(const char * filename);
 
 //Destructor 
 void free_table(Table *table);
